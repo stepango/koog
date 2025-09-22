@@ -15,6 +15,8 @@ import ai.koog.prompt.executor.clients.LLMClient
 import ai.koog.prompt.executor.clients.anthropic.AnthropicClientSettings
 import ai.koog.prompt.executor.clients.anthropic.AnthropicLLMClient
 import ai.koog.prompt.executor.clients.deepseek.DeepSeekClientSettings
+import ai.koog.prompt.executor.clients.grok.GrokClientSettings
+import ai.koog.prompt.executor.clients.grok.GrokLLMClient
 import ai.koog.prompt.executor.clients.deepseek.DeepSeekLLMClient
 import ai.koog.prompt.executor.clients.google.GoogleClientSettings
 import ai.koog.prompt.executor.clients.google.GoogleLLMClient
@@ -211,6 +213,13 @@ public class KoogAgentsConfig(private val scope: CoroutineScope) {
          */
         public fun deepSeek(apiKey: String, configure: DeepSeekConfig.() -> Unit = {}) {
             this@KoogAgentsConfig.deepSeek(apiKey, configure)
+        }
+
+        /**
+         * Configures and initializes the Grok (xAI) API with the provided API key and optional configuration.
+         */
+        public fun grok(apiKey: String, configure: GrokConfig.() -> Unit = {}) {
+            this@KoogAgentsConfig.grok(apiKey, configure)
         }
 
         /**
@@ -772,6 +781,27 @@ public class KoogAgentsConfig(private val scope: CoroutineScope) {
     }
 
     /**
+     * GrokConfig is a configuration class for setting up the Grok client.
+     * It manages API base URL, timeout settings, and HTTP client.
+     */
+    public class GrokConfig {
+        public var baseUrl: String? = null
+        public var timeoutConfig: ConnectionTimeoutConfig = ConnectionTimeoutConfig()
+        public var httpClient: HttpClient = HttpClient()
+
+        public fun timeouts(configure: TimeoutConfiguration.() -> Unit) {
+            timeoutConfig = with(TimeoutConfiguration()) {
+                configure()
+                ConnectionTimeoutConfig(
+                    requestTimeout.inWholeMilliseconds,
+                    connectTimeout.inWholeMilliseconds,
+                    socketTimeout.inWholeMilliseconds
+                )
+            }
+        }
+    }
+
+    /**
      * OllamaConfig is a configuration class for managing the settings required to connect
      * and interact with an Ollama-based language model server. It includes properties for setting
      * the server's base URL, connection timeouts, and an HTTP client for underlying network communication.
@@ -944,6 +974,26 @@ public class KoogAgentsConfig(private val scope: CoroutineScope) {
             )
         }
         addLLMClient(LLMProvider.DeepSeek, client)
+    }
+
+    /**
+     * Configures and integrates a Grok client into the system.
+     */
+    internal fun grok(apiKey: String, configure: GrokConfig.() -> Unit) {
+        val client = with(GrokConfig()) {
+            configure()
+            val defaults = GrokClientSettings()
+
+            GrokLLMClient(
+                apiKey = apiKey,
+                settings = GrokClientSettings(
+                    baseUrl = baseUrl ?: defaults.baseUrl,
+                    timeoutConfig = timeoutConfig
+                ),
+                baseClient = httpClient
+            )
+        }
+        addLLMClient(LLMProvider.Grok, client)
     }
 
     /**

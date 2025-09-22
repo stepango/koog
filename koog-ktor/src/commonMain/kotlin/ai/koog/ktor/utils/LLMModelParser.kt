@@ -5,6 +5,7 @@ import ai.koog.prompt.executor.clients.deepseek.DeepSeekModels
 import ai.koog.prompt.executor.clients.google.GoogleModels
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.clients.openrouter.OpenRouterModels
+import ai.koog.prompt.executor.clients.grok.GrokModels
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.llm.OllamaModels
 import io.ktor.util.logging.KtorSimpleLogger
@@ -33,6 +34,7 @@ internal fun getModelFromIdentifier(identifier: String): LLModel? {
         "google" -> google(parts, identifier)
         "openrouter" -> openrouter(parts, identifier)
         "deepseek" -> deepSeek(parts, identifier)
+        "grok" -> grok(parts, identifier)
         "ollama" -> ollama(parts, identifier)
 
         else -> {
@@ -251,6 +253,30 @@ private val OPENROUTER_MODELS_MAP = mapOf(
 private val DEEPSEEK_MODELS_MAP = mapOf(
     "deepseek-chat" to DeepSeekModels.DeepSeekChat,
     "deepseek-reasoner" to DeepSeekModels.DeepSeekReasoner,
+)
+
+private fun grok(parts: List<String>, identifier: String): LLModel? {
+    if (parts.size < 2) {
+        logger.debug("Grok model identifier must be in format 'grok.model', got: $identifier")
+        return null
+    }
+
+    val modelName = parts[1].lowercase()
+    val normalizedModelName = modelName.lowercase()
+    val model = GROK_MODELS_MAP[normalizedModelName]
+    if (model == null) {
+        println("Model '$modelName' not found in GrokModels")
+        return null
+    }
+
+    return model
+}
+
+private val GROK_MODELS_MAP = mapOf(
+    "grok-4-0709" to GrokModels.Grok4,
+    "grok-code-fast-1" to GrokModels.GrokCodeFast1,
+    "grok-4-fast-non-reasoning" to GrokModels.Grok4Fast,
+    "grok-4-fast-reasoning" to GrokModels.Grok4FastReasoning,
 )
 
 private val OLLAMA_GROQ_MODELS_MAP = mapOf(

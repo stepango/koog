@@ -123,4 +123,10 @@ public abstract class LLMProvider(public val id: String, public val display: Str
      */
     @Serializable
     public data object DeepSeek : LLMProvider("deepseek", "DeepSeek")
+
+    /**
+     * Represents the xAI Grok provider.
+     */
+    @Serializable
+    public data object Grok : LLMProvider("grok", "Grok")
 }
